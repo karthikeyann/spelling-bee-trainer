@@ -303,7 +303,7 @@
         </div>
 
         <div id="instructions" class="instructions">
-            <strong>⌨️</strong> Use <span class="kbd">Tab</span> to navigate between fields. Press <span class="kbd">Space</span> to start/advance, or click buttons.
+            <strong>⌨️</strong> <span class="kbd">Tab</span> to navigate | <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat
         </div>
     </div>
 
@@ -466,25 +466,40 @@
             progressBarFill.style.width = `${percentage}%`;
         }
 
-        // Handle space key press
-        function handleSpaceKey(event) {
-            // Only handle space key
-            if (event.code !== 'Space') return;
-            
+        // Handle keyboard shortcuts
+        function handleKeyPress(event) {
             // Check if focus is on textarea or voice select (allow normal behavior there)
             const activeElement = document.activeElement;
             if (activeElement === wordInput || activeElement === voiceSelect) {
-                return; // Let space work normally in these fields
+                return; // Let keys work normally in these fields
             }
             
-            // Prevent default space behavior (scrolling/button activation)
-            event.preventDefault();
+            // Handle Space key
+            if (event.code === 'Space') {
+                // Prevent default space behavior (scrolling/button activation)
+                event.preventDefault();
+                
+                if (!isRunning) {
+                    // Space key starts practice when not running
+                    startPractice();
+                } else {
+                    // Space key advances to next word when running
+                    currentIndex++;
+                    
+                    if (currentIndex < words.length) {
+                        updateProgress();
+                        speakWord(words[currentIndex]);
+                    } else {
+                        // Reached end of words
+                        stopPractice();
+                    }
+                }
+            }
             
-            if (!isRunning) {
-                // Space key starts practice when not running
-                startPractice();
-            } else {
-                // Space key advances to next word when running
+            // Handle Right Arrow key (next word)
+            if ((event.key === 'ArrowRight' || event.key === 'Right') && isRunning) {
+                event.preventDefault();
+                // Move to next word
                 currentIndex++;
                 
                 if (currentIndex < words.length) {
@@ -494,6 +509,24 @@
                     // Reached end of words
                     stopPractice();
                 }
+            }
+            
+            // Handle Left Arrow key (previous word)
+            if ((event.key === 'ArrowLeft' || event.key === 'Left') && isRunning) {
+                event.preventDefault();
+                // Move to previous word
+                if (currentIndex > 0) {
+                    currentIndex--;
+                    updateProgress();
+                    speakWord(words[currentIndex]);
+                }
+            }
+            
+            // Handle R key (repeat current word)
+            if ((event.key === 'r' || event.key === 'R') && isRunning) {
+                event.preventDefault();
+                // Repeat the current word
+                speakWord(words[currentIndex]);
             }
         }
 
@@ -523,7 +556,7 @@
             startStopBtn.textContent = 'Stop';
             startStopBtn.classList.add('stop-mode');
             statusSection.classList.add('active');
-            instructions.innerHTML = '⌨️ Press <span class="kbd">Space</span> to pronounce the next word. Click <strong>STOP</strong> to exit practice mode.';
+            instructions.innerHTML = '⌨️ <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat | Click <strong>STOP</strong> to exit';
             instructions.classList.add('active');
             
             // Start with first word
@@ -547,7 +580,7 @@
             startStopBtn.textContent = 'Start';
             startStopBtn.classList.remove('stop-mode');
             statusSection.classList.remove('active');
-            instructions.innerHTML = '<strong>⌨️</strong> Use <span class="kbd">Tab</span> to navigate between fields. Press <span class="kbd">Space</span> to start/advance, or click buttons.';
+            instructions.innerHTML = '<strong>⌨️</strong> <span class="kbd">Tab</span> to navigate | <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat';
             instructions.classList.remove('active');
             
             // Reset displays
@@ -574,7 +607,7 @@
 
         // Event listeners
         startStopBtn.addEventListener('click', toggleStartStop);
-        document.addEventListener('keydown', handleSpaceKey);
+        document.addEventListener('keydown', handleKeyPress);
 
         // Load voices when they become available
         // Chrome loads voices asynchronously
