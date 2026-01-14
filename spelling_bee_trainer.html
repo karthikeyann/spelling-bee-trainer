@@ -149,8 +149,17 @@
             transform: translateY(0);
         }
 
+        #startStopBtn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+        }
+
         #startStopBtn.stop-mode {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        #startStopBtn.stop-mode:focus {
+            box-shadow: 0 0 0 3px rgba(245, 87, 108, 0.4);
         }
 
         .status-section {
@@ -228,6 +237,18 @@
             color: #0c5460;
         }
 
+        .kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
         @media (max-width: 600px) {
             .container {
                 padding: 20px;
@@ -282,7 +303,7 @@
         </div>
 
         <div id="instructions" class="instructions">
-            <strong>Instructions:</strong> Paste your words in the text field above, then click START to begin practice.
+            <strong>⌨️</strong> Use <span class="kbd">Tab</span> to navigate between fields. Press <span class="kbd">Space</span> to start/advance, or click buttons.
         </div>
     </div>
 
@@ -325,15 +346,20 @@
             // Find a natural-sounding default voice
             // Priority: Enhanced/Natural > Google > Microsoft > Premium > any English voice
             let defaultVoice = null;
+
+            // Choose Aman as default voice
+            defaultVoice = voices.find(voice => voice.name.includes('Aman'));
             
             // Look for enhanced/natural voices first
-            defaultVoice = voices.find(voice => 
-                voice.lang.startsWith('en') && 
-                (voice.name.includes('Enhanced') || 
-                 voice.name.includes('Natural') || 
-                 voice.name.includes('Premium') ||
-                 voice.name.includes('Neural'))
-            );
+            if (!defaultVoice) {
+                defaultVoice = voices.find(voice => 
+                    voice.lang.startsWith('en') && 
+                    (voice.name.includes('Enhanced') || 
+                    voice.name.includes('Natural') || 
+                    voice.name.includes('Premium') ||
+                    voice.name.includes('Neural'))
+                );
+            }
             
             // Fallback to Google voices
             if (!defaultVoice) {
@@ -442,13 +468,23 @@
 
         // Handle space key press
         function handleSpaceKey(event) {
-            if (!isRunning) return;
+            // Only handle space key
+            if (event.code !== 'Space') return;
             
-            // Prevent default space behavior (scrolling)
-            if (event.code === 'Space') {
-                event.preventDefault();
-                
-                // Move to next word
+            // Check if focus is on textarea or voice select (allow normal behavior there)
+            const activeElement = document.activeElement;
+            if (activeElement === wordInput || activeElement === voiceSelect) {
+                return; // Let space work normally in these fields
+            }
+            
+            // Prevent default space behavior (scrolling/button activation)
+            event.preventDefault();
+            
+            if (!isRunning) {
+                // Space key starts practice when not running
+                startPractice();
+            } else {
+                // Space key advances to next word when running
                 currentIndex++;
                 
                 if (currentIndex < words.length) {
@@ -487,7 +523,7 @@
             startStopBtn.textContent = 'Stop';
             startStopBtn.classList.add('stop-mode');
             statusSection.classList.add('active');
-            instructions.textContent = '⌨️ Press SPACE to pronounce the next word. Click STOP to exit practice mode.';
+            instructions.innerHTML = '⌨️ Press <span class="kbd">Space</span> to pronounce the next word. Click <strong>STOP</strong> to exit practice mode.';
             instructions.classList.add('active');
             
             // Start with first word
@@ -511,7 +547,7 @@
             startStopBtn.textContent = 'Start';
             startStopBtn.classList.remove('stop-mode');
             statusSection.classList.remove('active');
-            instructions.textContent = 'Instructions: Paste your words in the text field above, then click START to begin practice.';
+            instructions.innerHTML = '<strong>⌨️</strong> Use <span class="kbd">Tab</span> to navigate between fields. Press <span class="kbd">Space</span> to start/advance, or click buttons.';
             instructions.classList.remove('active');
             
             // Reset displays
