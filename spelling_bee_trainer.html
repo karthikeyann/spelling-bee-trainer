@@ -585,22 +585,23 @@
         // Also try to load immediately (works in some browsers)
         loadVoices();
 
-        // Load words from words.txt if available (optional)
+        // Save words to localStorage whenever they change
+        wordInput.addEventListener('input', () => {
+            localStorage.setItem('spellingBeeWords', wordInput.value);
+        });
+
+        // Set default words on page load
         window.addEventListener('load', () => {
             // Try loading voices again on page load
             setTimeout(loadVoices, 100);
             
-            fetch('words.txt')
-                .then(response => response.text())
-                .then(text => {
-                    if (text.trim()) {
-                        wordInput.value = text;
-                    }
-                })
-                .catch(() => {
-                    // File not found or error, that's okay
-                    console.log('No words.txt file found, starting with empty input');
-                });
+            // Load saved words from localStorage, or use default
+            const savedWords = localStorage.getItem('spellingBeeWords');
+            if (savedWords !== null) {
+                wordInput.value = savedWords;
+            } else {
+                wordInput.value = 'karthik divya ashvikha';
+            }
         });
     </script>
 </body>
