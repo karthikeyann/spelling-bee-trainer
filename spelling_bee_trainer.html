@@ -191,12 +191,43 @@
             margin-bottom: 10px;
         }
 
+        .word-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            min-height: 50px;
+        }
+
         .current-word-display {
             font-size: 36px;
             font-weight: bold;
             color: #667eea;
             font-family: 'Georgia', serif;
-            min-height: 50px;
+            flex-shrink: 0;
+        }
+
+        .nav-word {
+            font-size: 16px;
+            color: #101010;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            opacity: 0.5;
+            min-width: 120px;
+            text-align: center;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-word:not(:empty) {
+            opacity: 0.85;
+        }
+
+        .prev-word {
+            text-align: right;
+        }
+
+        .next-word {
+            text-align: left;
         }
 
         .progress {
@@ -219,6 +250,22 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: width 0.3s ease;
             width: 0%;
+        }
+
+        .speed-indicator {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        #speedText {
+            padding: 4px 12px;
+            background: #fff;
+            border: 2px solid #667eea;
+            border-radius: 20px;
+            color: #667eea;
         }
 
         .instructions {
@@ -266,6 +313,15 @@
             .current-word-display {
                 font-size: 28px;
             }
+
+            .nav-word {
+                font-size: 14px;
+                min-width: 80px;
+            }
+
+            .word-navigation {
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -292,7 +348,11 @@
         <div id="statusSection" class="status-section">
             <div class="current-word">
                 <div class="current-word-label">Current Word</div>
-                <div id="currentWordDisplay" class="current-word-display">-</div>
+                <div class="word-navigation">
+                    <div id="prevWordDisplay" class="nav-word prev-word">←</div>
+                    <div id="currentWordDisplay" class="current-word-display">-</div>
+                    <div id="nextWordDisplay" class="nav-word next-word">→</div>
+                </div>
             </div>
             <div class="progress">
                 <span id="progressText">Word 0 of 0</span>
@@ -300,10 +360,13 @@
                     <div id="progressBarFill" class="progress-bar-fill"></div>
                 </div>
             </div>
+            <div class="speed-indicator">
+                <span id="speedText">Speed: 0.8x</span>
+            </div>
         </div>
 
         <div id="instructions" class="instructions">
-            <strong>⌨️</strong> <span class="kbd">Tab</span> to navigate | <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat
+            <strong>⌨️</strong> <span class="kbd">→</span>/<span class="kbd">Space</span> next | <span class="kbd">←</span> prev | <span class="kbd">R</span> repeat | <span class="kbd">↑</span>/<span class="kbd">↓</span> speed
         </div>
     </div>
 
@@ -315,16 +378,20 @@
         let synth = window.speechSynthesis;
         let voices = [];
         let selectedVoice = null;
+        let speechRate = 0.8; // Default speech rate (0.1 to 2.0)
         
         // DOM elements
         const wordInput = document.getElementById('wordInput');
         const startStopBtn = document.getElementById('startStopBtn');
         const statusSection = document.getElementById('statusSection');
         const currentWordDisplay = document.getElementById('currentWordDisplay');
+        const prevWordDisplay = document.getElementById('prevWordDisplay');
+        const nextWordDisplay = document.getElementById('nextWordDisplay');
         const progressText = document.getElementById('progressText');
         const progressBarFill = document.getElementById('progressBarFill');
         const instructions = document.getElementById('instructions');
         const voiceSelect = document.getElementById('voiceSelect');
+        const speedText = document.getElementById('speedText');
 
         // Parse words from input
         function parseWords(text) {
@@ -433,7 +500,7 @@
             synth.cancel();
             
             const utterance = new SpeechSynthesisUtterance(word);
-            utterance.rate = 0.8; // Slightly slower for clarity
+            utterance.rate = speechRate; // Use adjustable speech rate
             utterance.pitch = 1.0;
             utterance.volume = 1.0;
             
@@ -464,6 +531,25 @@
             currentWordDisplay.textContent = words[currentIndex];
             progressText.textContent = `Word ${current} of ${total}`;
             progressBarFill.style.width = `${percentage}%`;
+            
+            // Update previous word display
+            if (currentIndex > 0) {
+                prevWordDisplay.textContent = words[currentIndex - 1];
+            } else {
+                prevWordDisplay.textContent = '←';
+            }
+            
+            // Update next word display
+            if (currentIndex < words.length - 1) {
+                nextWordDisplay.textContent = words[currentIndex + 1];
+            } else {
+                nextWordDisplay.textContent = '→';
+            }
+        }
+
+        // Update speed display
+        function updateSpeedDisplay() {
+            speedText.textContent = `Speed: ${speechRate.toFixed(1)}x`;
         }
 
         // Handle keyboard shortcuts
@@ -528,6 +614,24 @@
                 // Repeat the current word
                 speakWord(words[currentIndex]);
             }
+            
+            // Handle Up Arrow key (increase speed)
+            if (event.key === 'ArrowUp' || event.key === 'Up') {
+                event.preventDefault();
+                // Increase speech rate by 0.1, max 2.0
+                speechRate = Math.min(2.0, speechRate + 0.1);
+                updateSpeedDisplay();
+                console.log('Speech rate increased to:', speechRate.toFixed(1));
+            }
+            
+            // Handle Down Arrow key (decrease speed)
+            if (event.key === 'ArrowDown' || event.key === 'Down') {
+                event.preventDefault();
+                // Decrease speech rate by 0.1, min 0.1
+                speechRate = Math.max(0.1, speechRate - 0.1);
+                updateSpeedDisplay();
+                console.log('Speech rate decreased to:', speechRate.toFixed(1));
+            }
         }
 
         // Start practice mode
@@ -556,11 +660,12 @@
             startStopBtn.textContent = 'Stop';
             startStopBtn.classList.add('stop-mode');
             statusSection.classList.add('active');
-            instructions.innerHTML = '⌨️ <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat | Click <strong>STOP</strong> to exit';
+            instructions.innerHTML = '⌨️ <span class="kbd">→</span>/<span class="kbd">Space</span> next | <span class="kbd">←</span> prev | <span class="kbd">R</span> repeat | <span class="kbd">↑</span>/<span class="kbd">↓</span> speed';
             instructions.classList.add('active');
             
             // Start with first word
             updateProgress();
+            updateSpeedDisplay();
             speakWord(words[currentIndex]);
         }
 
@@ -580,11 +685,13 @@
             startStopBtn.textContent = 'Start';
             startStopBtn.classList.remove('stop-mode');
             statusSection.classList.remove('active');
-            instructions.innerHTML = '<strong>⌨️</strong> <span class="kbd">Tab</span> to navigate | <span class="kbd">Space</span>/<span class="kbd">→</span> next | <span class="kbd">←</span> previous | <span class="kbd">R</span> repeat';
+            instructions.innerHTML = '<strong>⌨️</strong> <span class="kbd">→</span>/<span class="kbd">Space</span> next | <span class="kbd">←</span> prev | <span class="kbd">R</span> repeat | <span class="kbd">↑</span>/<span class="kbd">↓</span> speed';
             instructions.classList.remove('active');
             
             // Reset displays
             currentWordDisplay.textContent = '-';
+            prevWordDisplay.textContent = '←';
+            nextWordDisplay.textContent = '→';
             progressText.textContent = 'Word 0 of 0';
             progressBarFill.style.width = '0%';
         }
@@ -627,6 +734,9 @@
         window.addEventListener('load', () => {
             // Try loading voices again on page load
             setTimeout(loadVoices, 100);
+            
+            // Initialize speed display
+            updateSpeedDisplay();
             
             // Load saved words from localStorage, or use default
             const savedWords = localStorage.getItem('spellingBeeWords');
