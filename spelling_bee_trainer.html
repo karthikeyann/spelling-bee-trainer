@@ -361,6 +361,9 @@
                 defaultVoice = voices[0];
             }
             
+            console.log('Default voice selected:', defaultVoice ? defaultVoice.name : 'None');
+            console.log('Total voices available:', voices.length);
+            
             // Group voices by language
             const englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
             const otherVoices = voices.filter(voice => !voice.lang.startsWith('en'));
@@ -369,9 +372,10 @@
             if (englishVoices.length > 0) {
                 const englishGroup = document.createElement('optgroup');
                 englishGroup.label = 'English Voices';
-                englishVoices.forEach((voice, index) => {
+                englishVoices.forEach((voice) => {
                     const option = document.createElement('option');
-                    option.value = index;
+                    // Use index from the full voices array for consistency
+                    option.value = voices.indexOf(voice);
                     option.textContent = `${voice.name} (${voice.lang})`;
                     if (voice === defaultVoice) {
                         option.selected = true;
@@ -411,6 +415,14 @@
             if (selectedVoice) {
                 utterance.voice = selectedVoice;
             }
+            
+            // Log voice information
+            const voiceIndex = voices.indexOf(selectedVoice);
+            console.log('Speaking word:', word);
+            console.log('Voice name:', selectedVoice ? selectedVoice.name : 'Default system voice');
+            console.log('Voice index:', voiceIndex >= 0 ? voiceIndex : 'N/A');
+            console.log('Voice language:', selectedVoice ? selectedVoice.lang : 'N/A');
+            console.log('---');
             
             synth.speak(utterance);
         }
@@ -521,6 +533,7 @@
         voiceSelect.addEventListener('change', (e) => {
             const selectedIndex = parseInt(e.target.value);
             selectedVoice = voices[selectedIndex];
+            console.log('Voice changed to:', selectedVoice ? selectedVoice.name : 'None', '(index:', selectedIndex, ')');
         });
 
         // Event listeners
