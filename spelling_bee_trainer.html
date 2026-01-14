@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Bee Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 0.95em;
+        }
+
+        .input-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        textarea {
+            width: 100%;
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            resize: none;
+            transition: all 0.3s ease;
+            line-height: 2;
+            min-height: 300px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.frozen {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .voice-selector-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .voice-selector-container label {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        #voiceSelect {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        #voiceSelect:hover {
+            border-color: #667eea;
+        }
+
+        #voiceSelect:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #startStopBtn {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        #startStopBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        #startStopBtn:active {
+            transform: translateY(0);
+        }
+
+        #startStopBtn.stop-mode {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .status-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            min-height: 180px;
+        }
+
+        .status-section.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .current-word {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .current-word-label {
+            font-size: 14px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .current-word-display {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+            font-family: 'Georgia', serif;
+            min-height: 50px;
+        }
+
+        .progress {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .instructions {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .instructions.active {
+            background: #d1ecf1;
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+
+            button {
+                padding: 12px 30px;
+                font-size: 16px;
+            }
+
+            .current-word-display {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🐝 Spelling Bee Trainer</h1>
+        <p class="subtitle">Paste your words below and practice with text-to-speech</p>
+        
+        <div class="input-section">
+            <textarea id="wordInput" placeholder="Paste your words here (separated by space, tab, or newline)..."></textarea>
+        </div>
+
+        <div class="voice-selector-container">
+            <label for="voiceSelect">🎙️ Voice:</label>
+            <select id="voiceSelect">
+                <option value="">Loading voices...</option>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button id="startStopBtn">Start</button>
+        </div>
+
+        <div id="statusSection" class="status-section">
+            <div class="current-word">
+                <div class="current-word-label">Current Word</div>
+                <div id="currentWordDisplay" class="current-word-display">-</div>
+            </div>
+            <div class="progress">
+                <span id="progressText">Word 0 of 0</span>
+                <div class="progress-bar">
+                    <div id="progressBarFill" class="progress-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="instructions" class="instructions">
+            <strong>Instructions:</strong> Paste your words in the text field above, then click START to begin practice.
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let isRunning = false;
+        let words = [];
+        let currentIndex = 0;
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let selectedVoice = null;
+        
+        // DOM elements
+        const wordInput = document.getElementById('wordInput');
+        const startStopBtn = document.getElementById('startStopBtn');
+        const statusSection = document.getElementById('statusSection');
+        const currentWordDisplay = document.getElementById('currentWordDisplay');
+        const progressText = document.getElementById('progressText');
+        const progressBarFill = document.getElementById('progressBarFill');
+        const instructions = document.getElementById('instructions');
+        const voiceSelect = document.getElementById('voiceSelect');
+
+        // Parse words from input
+        function parseWords(text) {
+            // Split by space, tab, or newline and filter out empty strings
+            return text.split(/[\s\t\n]+/).filter(word => word.trim().length > 0);
+        }
+
+        // Load available voices
+        function loadVoices() {
+            voices = synth.getVoices();
+            
+            if (voices.length === 0) {
+                return;
+            }
+            
+            // Clear existing options
+            voiceSelect.innerHTML = '';
+            
+            // Find a natural-sounding default voice
+            // Priority: Enhanced/Natural > Google > Microsoft > Premium > any English voice
+            let defaultVoice = null;
+            
+            // Look for enhanced/natural voices first
+            defaultVoice = voices.find(voice => 
+                voice.lang.startsWith('en') && 
+                (voice.name.includes('Enhanced') || 
+                 voice.name.includes('Natural') || 
+                 voice.name.includes('Premium') ||
+                 voice.name.includes('Neural'))
+            );
+            
+            // Fallback to Google voices
+            if (!defaultVoice) {
+                defaultVoice = voices.find(voice => 
+                    voice.lang.startsWith('en') && 
+                    voice.name.includes('Google')
+                );
+            }
+            
+            // Fallback to Microsoft voices
+            if (!defaultVoice) {
+                defaultVoice = voices.find(voice => 
+                    voice.lang.startsWith('en') && 
+                    (voice.name.includes('Microsoft') || voice.name.includes('Zira') || voice.name.includes('David'))
+                );
+            }
+            
+            // Fallback to any English voice
+            if (!defaultVoice) {
+                defaultVoice = voices.find(voice => voice.lang.startsWith('en'));
+            }
+            
+            // Fallback to first voice
+            if (!defaultVoice && voices.length > 0) {
+                defaultVoice = voices[0];
+            }
+            
+            // Group voices by language
+            const englishVoices = voices.filter(voice => voice.lang.startsWith('en'));
+            const otherVoices = voices.filter(voice => !voice.lang.startsWith('en'));
+            
+            // Add English voices first
+            if (englishVoices.length > 0) {
+                const englishGroup = document.createElement('optgroup');
+                englishGroup.label = 'English Voices';
+                englishVoices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    if (voice === defaultVoice) {
+                        option.selected = true;
+                        selectedVoice = voice;
+                    }
+                    englishGroup.appendChild(option);
+                });
+                voiceSelect.appendChild(englishGroup);
+            }
+            
+            // Add other voices
+            if (otherVoices.length > 0) {
+                const otherGroup = document.createElement('optgroup');
+                otherGroup.label = 'Other Languages';
+                otherVoices.forEach((voice, index) => {
+                    const option = document.createElement('option');
+                    // Adjust index for the full voices array
+                    option.value = voices.indexOf(voice);
+                    option.textContent = `${voice.name} (${voice.lang})`;
+                    otherGroup.appendChild(option);
+                });
+                voiceSelect.appendChild(otherGroup);
+            }
+        }
+
+        // Speak a word using Web Speech API
+        function speakWord(word) {
+            // Cancel any ongoing speech
+            synth.cancel();
+            
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.rate = 0.8; // Slightly slower for clarity
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+            
+            // Use selected voice if available
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
+            
+            synth.speak(utterance);
+        }
+
+        // Update UI with current progress
+        function updateProgress() {
+            if (words.length === 0) return;
+            
+            const current = currentIndex + 1;
+            const total = words.length;
+            const percentage = (current / total) * 100;
+            
+            currentWordDisplay.textContent = words[currentIndex];
+            progressText.textContent = `Word ${current} of ${total}`;
+            progressBarFill.style.width = `${percentage}%`;
+        }
+
+        // Handle space key press
+        function handleSpaceKey(event) {
+            if (!isRunning) return;
+            
+            // Prevent default space behavior (scrolling)
+            if (event.code === 'Space') {
+                event.preventDefault();
+                
+                // Move to next word
+                currentIndex++;
+                
+                if (currentIndex < words.length) {
+                    updateProgress();
+                    speakWord(words[currentIndex]);
+                } else {
+                    // Reached end of words
+                    stopPractice();
+                }
+            }
+        }
+
+        // Start practice mode
+        function startPractice() {
+            const text = wordInput.value.trim();
+            
+            if (!text) {
+                alert('Please paste some words first!');
+                return;
+            }
+            
+            words = parseWords(text);
+            
+            if (words.length === 0) {
+                alert('No valid words found. Please check your input.');
+                return;
+            }
+            
+            // Update state
+            isRunning = true;
+            currentIndex = 0;
+            
+            // Update UI
+            wordInput.classList.add('frozen');
+            wordInput.readOnly = true;
+            startStopBtn.textContent = 'Stop';
+            startStopBtn.classList.add('stop-mode');
+            statusSection.classList.add('active');
+            instructions.textContent = '⌨️ Press SPACE to pronounce the next word. Click STOP to exit practice mode.';
+            instructions.classList.add('active');
+            
+            // Start with first word
+            updateProgress();
+            speakWord(words[currentIndex]);
+        }
+
+        // Stop practice mode
+        function stopPractice() {
+            // Cancel any ongoing speech
+            synth.cancel();
+            
+            // Update state
+            isRunning = false;
+            currentIndex = 0;
+            words = [];
+            
+            // Update UI
+            wordInput.classList.remove('frozen');
+            wordInput.readOnly = false;
+            startStopBtn.textContent = 'Start';
+            startStopBtn.classList.remove('stop-mode');
+            statusSection.classList.remove('active');
+            instructions.textContent = 'Instructions: Paste your words in the text field above, then click START to begin practice.';
+            instructions.classList.remove('active');
+            
+            // Reset displays
+            currentWordDisplay.textContent = '-';
+            progressText.textContent = 'Word 0 of 0';
+            progressBarFill.style.width = '0%';
+        }
+
+        // Toggle between start and stop
+        function toggleStartStop() {
+            if (isRunning) {
+                stopPractice();
+            } else {
+                startPractice();
+            }
+        }
+
+        // Handle voice selection change
+        voiceSelect.addEventListener('change', (e) => {
+            const selectedIndex = parseInt(e.target.value);
+            selectedVoice = voices[selectedIndex];
+        });
+
+        // Event listeners
+        startStopBtn.addEventListener('click', toggleStartStop);
+        document.addEventListener('keydown', handleSpaceKey);
+
+        // Load voices when they become available
+        // Chrome loads voices asynchronously
+        if (synth.onvoiceschanged !== undefined) {
+            synth.onvoiceschanged = loadVoices;
+        }
+        
+        // Also try to load immediately (works in some browsers)
+        loadVoices();
+
+        // Load words from words.txt if available (optional)
+        window.addEventListener('load', () => {
+            // Try loading voices again on page load
+            setTimeout(loadVoices, 100);
+            
+            fetch('words.txt')
+                .then(response => response.text())
+                .then(text => {
+                    if (text.trim()) {
+                        wordInput.value = text;
+                    }
+                })
+                .catch(() => {
+                    // File not found or error, that's okay
+                    console.log('No words.txt file found, starting with empty input');
+                });
+        });
+    </script>
+</body>
+</html>
+
